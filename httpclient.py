@@ -41,13 +41,16 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        code = self.get_headers(data).split(' ')[1]
+        return int(code)
 
     def get_headers(self,data):
-        return None
+        headers = data.split('\r\n')[0]
+        return headers
 
     def get_body(self, data):
-        return None
+        body = data.split('\r\n\r\n', 1)[1]
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -68,13 +71,30 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-        code = 500
-        body = ""
+        print('url = ' + url)
+        host, port, path = self.parseUrl(url)
+        self.connect(host, port)
+        req = self.constructReq('GET', host, path)
+        self.sendall(req)
+        recvMsg = self.recvall(self.socket)
+        code = self.get_code(recvMsg)
+        body = self.get_body(recvMsg)
+        print(body)
+        self.close()
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        code = 500
-        body = ""
+        print('url = ' +url)
+        host, port, path = self.parseUrl(url)
+        self.connect(host, port)
+        body = urllib.parse.urlencode(args) if args else ''
+        req = self.constructReq('POST', host, path, body)
+        self.sendall(req)
+        recvMsg = self.recvall(self.socket)
+        code = self.get_code(recvMsg)
+        body = self.get_body(recvMsg)
+        print(body)
+        self.close()
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
@@ -82,7 +102,27 @@ class HTTPClient(object):
             return self.POST( url, args )
         else:
             return self.GET( url, args )
+
+    def parseUrl(self, url):
+        urlComponents = urllib.parse.urlparse(url)
+        host = urlComponents.hostname
+        port = int(urlComponents.port) if urlComponents.port else 80
+        path = urlComponents.path if urlComponents.path else '/'
+        
+        return host, port, path
     
+    def constructReq(self, method, host, path, body=''):
+        start_line = None
+        length = len(body)
+        if method == 'GET':
+            start_line = '{} {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n'.format(method, path, host)
+        elif method == 'POST':
+            content_type = 'application/x-www-form-urlencoded'
+            start_line = '{} {} HTTP/1.1\r\nHost: {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n'.format(
+                method, path, host, content_type, length)
+        
+        return start_line + body
+
 if __name__ == "__main__":
     client = HTTPClient()
     command = "GET"
