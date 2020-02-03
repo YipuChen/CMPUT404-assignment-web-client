@@ -77,9 +77,9 @@ class HTTPClient(object):
         req = self.constructReq('GET', host, path)
         self.sendall(req)
         recvMsg = self.recvall(self.socket)
+        print(recvMsg)
         code = self.get_code(recvMsg)
         body = self.get_body(recvMsg)
-        print(body)
         self.close()
         return HTTPResponse(code, body)
 
@@ -91,9 +91,9 @@ class HTTPClient(object):
         req = self.constructReq('POST', host, path, body)
         self.sendall(req)
         recvMsg = self.recvall(self.socket)
+        print(recvMsg)
         code = self.get_code(recvMsg)
         body = self.get_body(recvMsg)
-        print(body)
         self.close()
         return HTTPResponse(code, body)
 
