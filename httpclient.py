@@ -111,7 +111,7 @@ class HTTPClient(object):
     
     def constructReq(self, method, host, path, body=''):
         start_line = None
-        length = sys.getsizeof(body)
+        length = len(body)
         if method == 'GET':
             start_line = '{} {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n'.format(method, path, host)
         elif method == 'POST':
