@@ -71,7 +71,6 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-        print('url = ' + url)
         host, port, path = self.parseUrl(url)
         self.connect(host, port)
         req = self.constructReq('GET', host, path)
@@ -84,7 +83,6 @@ class HTTPClient(object):
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        print('url = ' +url)
         host, port, path = self.parseUrl(url)
         self.connect(host, port)
         body = urllib.parse.urlencode(args) if args else ''
@@ -113,7 +111,7 @@ class HTTPClient(object):
     
     def constructReq(self, method, host, path, body=''):
         start_line = None
-        length = len(body)
+        length = sys.getsizeof(body)
         if method == 'GET':
             start_line = '{} {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n'.format(method, path, host)
         elif method == 'POST':
