@@ -33,21 +33,20 @@ class HTTPResponse(object):
         self.body = body
 
 class HTTPClient(object):
-    #def get_host_port(self,url):
-
+    #connect to host and port provided using socket
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
         return None
-
+    #get received status code
     def get_code(self, data):
         code = self.get_headers(data).split(' ')[1]
         return int(code)
-
+    #get received message header
     def get_headers(self,data):
         headers = data.split('\r\n')[0]
         return headers
-
+    #get received message body
     def get_body(self, data):
         body = data.split('\r\n\r\n', 1)[1]
         return body
@@ -70,28 +69,44 @@ class HTTPClient(object):
                 done = not part
         return buffer.decode('utf-8')
 
+    #This method handles a GET request
     def GET(self, url, args=None):
+        #parse url to get host, port and path info
         host, port, path = self.parseUrl(url)
+
+        #Start a socket connection and send a GET request
         self.connect(host, port)
         req = self.constructReq('GET', host, path)
         self.sendall(req)
+
+        #Fetch received message and print to stdout
         recvMsg = self.recvall(self.socket)
         print(recvMsg)
         code = self.get_code(recvMsg)
         body = self.get_body(recvMsg)
+
+        #close the sockect connection
         self.close()
+
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
+        #parse url to get host, port and path info
         host, port, path = self.parseUrl(url)
+
+        #Start a socket connection and send a POST request
         self.connect(host, port)
         body = urllib.parse.urlencode(args) if args else ''
         req = self.constructReq('POST', host, path, body)
         self.sendall(req)
+
+        #Fetch received message and print to stdout
         recvMsg = self.recvall(self.socket)
         print(recvMsg)
         code = self.get_code(recvMsg)
         body = self.get_body(recvMsg)
+
+        #close the sockect connection
         self.close()
         return HTTPResponse(code, body)
 
@@ -112,8 +127,10 @@ class HTTPClient(object):
     def constructReq(self, method, host, path, body=''):
         start_line = None
         length = len(body)
+        #Construct a GET request start line
         if method == 'GET':
             start_line = '{} {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n'.format(method, path, host)
+        #Construct a POST request start line including Content-Type, Content-Length
         elif method == 'POST':
             content_type = 'application/x-www-form-urlencoded'
             start_line = '{} {} HTTP/1.1\r\nHost: {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n'.format(
